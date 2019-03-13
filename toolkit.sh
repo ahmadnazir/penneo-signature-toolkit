@@ -9,6 +9,11 @@ function random () {
 }
 export -f random
 
+function decode() {
+    base64 -d $1
+}
+export -f decode
+
 function extract-certificate () {
     local index=$1
     xmlstarlet \
@@ -22,10 +27,20 @@ function extract-certificate () {
 }
 export -f extract-certificate
 
-function decode() {
-    base64 -d $1
+function extract-sign-text () {
+    local index=$1
+    xmlstarlet \
+        sel \
+        -N openoces='http://www.openoces.org/2006/07/signature#' \
+        -N ds='http://www.w3.org/2000/09/xmldsig#' \
+        -t \
+        -v \
+        "//ds:Object[@Id='ToBeSigned']/ds:SignatureProperties/ds:SignatureProperty[1]/openoces:Value/text()" \
+        /dev/stdin | \
+        decode | \
+        xmllint --format -
 }
-export -f decode
+export -f extract-sign-text
 
 function set-certificate () {
     # echo
@@ -94,10 +109,10 @@ function verify-chain () {
 }
 export -f verify-chain
 
-function cn () {
-    openssl x509 -in /dev/stdin -noout -text | grep Subject:
+function x509 () {
+    openssl x509 -in /dev/stdin -noout -text
 }
-export -f cn
+export -f x509
 
 function verify-signature-value () {
     local file=/tmp/`random`
